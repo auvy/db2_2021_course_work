@@ -1,0 +1,70 @@
+#mongod --dbpath c:/data/db/shard1/db1 --port 27001 --replSet replica --shardsvr
+#mongod --dbpath ./data/db/shard1/db2 --port 27002 --replSet replica
+#mongod --dbpath ./data/db/shard1/db3 --port 27003 --replSet replica
+
+#mongod --dbpath ./data/db/shard2 --port 27004 --shardsvr --replSet replica2
+
+#mongod --dbpath ./data/db/config --configsvr --port 27005 --replSet config
+
+#mongos --configdb config/127.0.0.1:27005 --port 27006
+
+#mongo --port 27006
+
+
+#connect to server
+#mongo --host 127.0.0.1 --port 27002
+
+//
+
+cd C:\Program Files\MongoDB\Server\4.4\bin
+
+//shard one
+mongod --dbpath C:\data\shard1\db1 --port 27001 --replSet repl --shardsvr
+mongod --dbpath C:\data\shard1\db2 --port 27002 --replSet repl --shardsvr
+mongod --dbpath C:\data\shard1\db3 --port 27003 --replSet repl --shardsvr
+
+mongo --port 27001
+rs.initiate()	
+rs.add("localhost:27002")
+rs.add("localhost:27003")
+
+
+//shard 2
+mongod --dbpath C:\data\shard2\db4 --port 27004 --shardsvr --replSet repl2
+mongod --dbpath C:\data\shard2\db5 --port 27005 --shardsvr --replSet repl2
+mongod --dbpath C:\data\shard2\db6 --port 27006 --shardsvr --replSet repl2
+
+mongo --port 27004
+rs.initiate()	
+rs.add("localhost:27005")
+rs.add("localhost:27006")
+
+
+//config set
+mongod --dbpath C:\data\config\db7 --configsvr --port 27007 --replSet configSet
+mongod --dbpath C:\data\config\db8 --configsvr --port 27008 --replSet configSet
+mongod --dbpath C:\data\config\db9 --configsvr --port 27009 --replSet configSet
+
+mongo --port 27007
+rs.initiate({ _id: "configSet",  configsvr: true,    
+               members:[
+                          { _id: 0, host: "localhost:27007" },       
+                          { _id: 1, host: "localhost:27008" },
+                          { _id: 2, host: "localhost:27009" },    
+               ]})
+
+//mongos
+mongos --configdb configSet/localhost:27007,localhost:27008,localhost:27009 --port 40000
+
+mongo --port 40000
+sh.addShard("repl/localhost:27001,localhost:27002,localhost:27003")
+sh.addShard("repl2/localhost:27004,localhost:27005,localhost:27006")
+
+use admin
+sh.enableSharding("db2cw")
+
+
+#connect to server
+#mongo --host 127.0.0.1 --port 27002
+
+db.printShardingStatus(verbose=false)
