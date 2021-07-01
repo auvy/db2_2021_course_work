@@ -1,0 +1,3 @@
+appstore763kk.csv = https://www.kaggle.com/cmqub19/763k-ios-app-info
+
+idk bout the google it's on kaggle maybe idk
